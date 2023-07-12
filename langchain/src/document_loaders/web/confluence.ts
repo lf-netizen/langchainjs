@@ -61,6 +61,16 @@ export class ConfluencePagesLoader extends BaseDocumentLoader {
     }
   }
 
+  public async loadFromPageIds(pageIds: number[]): Promise<Document[]> {
+    try {
+      const pages = await Promise.all(pageIds.map((pageId: number) => this.fetchPageFromId(pageId)));
+      return pages.map((page) => this.createDocumentFromPage(page));
+    } catch (error) {
+      console.error("Error:", error);
+      return [];
+    }
+  }
+
   protected async fetchConfluenceData(
     url: string
   ): Promise<ConfluenceAPIResponse> {
@@ -87,6 +97,13 @@ export class ConfluencePagesLoader extends BaseDocumentLoader {
     } catch (error) {
       throw new Error(`Failed to fetch ${url} from Confluence: ${error}`);
     }
+  }
+
+  private async fetchPageFromId(pageId: string|number): Promise<ConfluencePage> {
+    const url = `${this.baseUrl}/api/v2/pages/${pageId}?body-format=storage`;
+    const data: any = await this.fetchConfluenceData(url);
+
+    return data
   }
 
   private async fetchAllPagesInSpace(start = 0): Promise<ConfluencePage[]> {
